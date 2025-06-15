@@ -1,96 +1,373 @@
-<!-- gobang.html -->
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>五子棋游戏</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .board-grid {
-        background-size: calc(100% / 14) calc(100% / 14);
-        background-image:
-          linear-gradient(to right, rgba(0,0,0,0.6) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(0,0,0,0.6) 1px, transparent 1px);
-      }
-      .piece-shadow {
-        filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
-      }
-    }
-  </style>
-</head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
-    <div class="bg-amber-700 text-white p-6 text-center">
-      <h1 class="text-2xl font-bold">五子棋游戏</h1>
-      <p class="text-amber-300 mt-2">经典对弈游戏</p>
-    </div>
-    <div class="p-6 flex flex-col md:flex-row gap-6">
-      <!-- 游戏区域 -->
-      <div class="flex-1">
-        <div class="aspect-square bg-amber-300 rounded-lg shadow-lg overflow-hidden board-grid relative">
-          <canvas id="gameCanvas" class="w-full h-full cursor-pointer"></canvas>
-        </div>
-        <div class="mt-4 p-3 bg-amber-100 rounded-lg text-center">
-          <p id="statusText" class="font-medium">游戏开始! 黑棋先行</p>
-        </div>
-      </div>
-
-      <!-- 控制面板 -->
-      <div class="w-full md:w-80 flex flex-col gap-6">
-        <div class="bg-gray-50 rounded-lg p-5 shadow-sm">
-          <h2 class="text-lg font-semibold mb-3 flex items-center">
-            <i class="fa fa-info-circle mr-2 text-amber-700"></i> 游戏信息
-          </h2>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-gray-600">当前回合</span>
-              <div class="flex items-center">
-                <div id="currentPlayer" class="w-6 h-6 rounded-full bg-black mr-2 piece-shadow"></div>
-                <span id="playerText">黑棋</span>
-              </div>
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>五子棋游戏</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+        <style type="text/tailwindcss">
+            @layer utilities {
+                .board-grid {
+                    background-size: calc(100% / 14) calc(100% / 14);
+                    background-image: 
+                        linear-gradient(to right, rgba(0,0,0,0.6) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(0,0,0,0.6) 1px, transparent 1px);
+                }
+                .piece-shadow {
+                    filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+                }
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-amber-700 text-white p-6 text-center">
+                <h1 class="text-2xl font-bold">五子棋游戏</h1>
+                <p class="text-amber-300 mt-2">经典对弈游戏</p>
             </div>
-            <div class="flex items-center justify-between">
-              <span class="text-gray-600">步数</span>
-              <span id="moveCount">0</span>
+            
+            <div class="p-6 flex flex-col md:flex-row gap-6">
+                <!-- 游戏区域 -->
+                <div class="flex-1">
+                    <div class="aspect-square bg-amber-300 rounded-lg shadow-lg overflow-hidden board-grid relative">
+                        <canvas id="gameCanvas" class="w-full h-full cursor-pointer"></canvas>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-amber-100 rounded-lg text-center">
+                        <p id="statusText" class="font-medium">游戏开始! 黑棋先行</p>
+                    </div>
+                </div>
+                
+                <!-- 游戏控制 -->
+                <div class="w-full md:w-80 flex flex-col gap-6">
+                    <div class="bg-gray-50 rounded-lg p-5 shadow-sm">
+                        <h2 class="text-lg font-semibold mb-3 flex items-center">
+                            <i class="fa fa-info-circle mr-2 text-amber-700"></i>游戏信息
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">当前回合</span>
+                                <div class="flex items-center">
+                                    <div id="currentPlayer" class="w-6 h-6 rounded-full bg-black mr-2 piece-shadow"></div>
+                                    <span id="playerText">黑棋</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">步数</span>
+                                <span id="moveCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="restartBtn" class="bg-amber-700 hover:bg-amber-800 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:translate-y-[-2px] flex items-center justify-center">
+                        <i class="fa fa-refresh mr-2"></i>重新开始
+                    </button>
+                </div>
             </div>
-          </div>
+            
+            <div class="bg-gray-50 p-4 text-center text-sm text-gray-500">
+                <p>© 2025 五子棋游戏 | 一个简单的Web游戏</p>
+            </div>
         </div>
 
-        <button id="restartBtn" class="bg-amber-700 hover:bg-amber-800 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:translate-y-[-2px] flex items-center justify-center">
-          <i class="fa fa-refresh mr-2"></i>重新开始
-        </button>
-      </div>
-    </div>
-
-    <div class="bg-gray-50 p-4 text-center text-sm text-gray-500">
-      <p>© 2025 五子棋游戏 | 一个简单的Web游戏</p>
-    </div>
-  </div>
-
-  <!-- 胜利模态框 -->
-  <div id="winModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
-      <div class="text-center">
-        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="fa fa-trophy text-3xl text-yellow-500"></i>
+        <!-- 胜利提示模态框 -->
+        <div id="winModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-trophy text-3xl text-yellow-500"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2" id="winnerText">黑棋获胜!</h2>
+                    <p class="text-gray-600 mb-6">恭喜您赢得了这场精彩的比赛!</p>
+                    <button id="newGameBtn" class="bg-amber-700 hover:bg-amber-800 text-white py-3 px-8 rounded-lg font-medium transition-all duration-200 hover:translate-y-[-2px]">
+                        开始新游戏
+                    </button>
+                </div>
+            </div>
         </div>
-        <h2 class="text-2xl font-bold mb-2" id="winnerText">黑棋获胜!</h2>
-        <p class="text-gray-600 mb-6">恭喜您赢得了这场精彩的比赛!</p>
-        <button id="newGameBtn" class="bg-amber-700 hover:bg-amber-800 text-white py-3 px-8 rounded-lg font-medium transition-all duration-200 hover:translate-y-[-2px]">
-          开始新游戏
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- 游戏逻辑 JS -->
-  <script>
-    // 为了清晰，这里省略了 JS 部分（你已经写好了逻辑，我会保留原样）
-    // 👇 如果你需要我简化或模块化 JS 代码，也可以说
-    // 👇 下一步我帮你部署，并添加 index.html 导航链接
-  </script>
-</body>
-</html>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // 游戏常量
+                const BOARD_SIZE = 15;
+                const CELL_SIZE = Math.min(window.innerWidth * 0.8 / BOARD_SIZE, window.innerHeight * 0.6 / BOARD_SIZE);
+                const PADDING = 50;
+                
+                // 游戏状态
+                let gameBoard = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+                let currentPlayer = 1; // 1: 黑棋, 2: 白棋
+                let gameOver = false;
+                let moveCount = 0;
+                
+                // DOM元素
+                const canvas = document.getElementById('gameCanvas');
+                const ctx = canvas.getContext('2d');
+                const statusText = document.getElementById('statusText');
+                const currentPlayerEl = document.getElementById('currentPlayer');
+                const playerText = document.getElementById('playerText');
+                const moveCountEl = document.getElementById('moveCount');
+                const restartBtn = document.getElementById('restartBtn');
+                const winModal = document.getElementById('winModal');
+                const modalContent = document.getElementById('modalContent');
+                const winnerText = document.getElementById('winnerText');
+                const newGameBtn = document.getElementById('newGameBtn');
+                
+                // 设置Canvas尺寸
+                canvas.width = CELL_SIZE * (BOARD_SIZE - 1);
+                canvas.height = CELL_SIZE * (BOARD_SIZE - 1);
+                
+                // 绘制棋盘
+                function drawBoard() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 绘制网格线
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 1.5;
+                    
+                    for (let i = 0; i < BOARD_SIZE; i++) {
+                        // 水平线
+                        ctx.beginPath();
+                        ctx.moveTo(0, i * CELL_SIZE);
+                        ctx.lineTo(canvas.width, i * CELL_SIZE);
+                        ctx.stroke();
+                        
+                        // 垂直线
+                        ctx.beginPath();
+                        ctx.moveTo(i * CELL_SIZE, 0);
+                        ctx.lineTo(i * CELL_SIZE, canvas.height);
+                        ctx.stroke();
+                    }
+                    
+                    // 绘制天元和星位
+                    const starPoints = [
+                        {x: 3, y: 3}, {x: 3, y: 11}, {x: 7, y: 7}, 
+                        {x: 11, y: 3}, {x: 11, y: 11}
+                    ];
+                    
+                    starPoints.forEach(point => {
+                        ctx.beginPath();
+                        ctx.arc(point.x * CELL_SIZE, point.y * CELL_SIZE, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fill();
+                    });
+                    
+                    // 绘制棋子
+                    for (let i = 0; i < BOARD_SIZE; i++) {
+                        for (let j = 0; j < BOARD_SIZE; j++) {
+                            if (gameBoard[i][j] !== 0) {
+                                drawPiece(i, j, gameBoard[i][j]);
+                            }
+                        }
+                    }
+                }
+                
+                // 绘制棋子
+                function drawPiece(row, col, player) {
+                    const x = col * CELL_SIZE;
+                    const y = row * CELL_SIZE;
+                    
+                    // 棋子阴影
+                    ctx.beginPath();
+                    ctx.arc(x, y, CELL_SIZE * 0.4 + 2, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                    ctx.fill();
+                    
+                    // 棋子本体
+                    ctx.beginPath();
+                    ctx.arc(x, y, CELL_SIZE * 0.4, 0, Math.PI * 2);
+                    
+                    if (player === 1) {
+                        // 黑棋
+                        const gradient = ctx.createRadialGradient(
+                            x - CELL_SIZE * 0.15, y - CELL_SIZE * 0.15, CELL_SIZE * 0.05,
+                            x, y, CELL_SIZE * 0.4
+                        );
+                        gradient.addColorStop(0, '#555');
+                        gradient.addColorStop(1, '#000');
+                        ctx.fillStyle = gradient;
+                    } else {
+                        // 白棋
+                        const gradient = ctx.createRadialGradient(
+                            x - CELL_SIZE * 0.15, y - CELL_SIZE * 0.15, CELL_SIZE * 0.05,
+                            x, y, CELL_SIZE * 0.4
+                        );
+                        gradient.addColorStop(0, '#fff');
+                        gradient.addColorStop(1, '#ddd');
+                        ctx.fillStyle = gradient;
+                    }
+                    
+                    ctx.fill();
+                    
+                    // 棋子边缘
+                    ctx.strokeStyle = player === 1 ? '#333' : '#ccc';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                
+                // 检查胜利条件
+                function checkWin(row, col, player) {
+                    const directions = [
+                        [1, 0],   // 水平
+                        [0, 1],   // 垂直
+                        [1, 1],   // 对角线
+                        [1, -1]   // 反对角线
+                    ];
+                    
+                    for (const [dx, dy] of directions) {
+                        let count = 1;  // 当前位置已经有一个棋子
+                        
+                        // 正向检查
+                        for (let i = 1; i < 5; i++) {
+                            const newRow = row + i * dy;
+                            const newCol = col + i * dx;
+                            
+                            if (newRow < 0 || newRow >= BOARD_SIZE || newCol < 0 || newCol >= BOARD_SIZE) {
+                                break;
+                            }
+                            
+                            if (gameBoard[newRow][newCol] === player) {
+                                count++;
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        // 反向检查
+                        for (let i = 1; i < 5; i++) {
+                            const newRow = row - i * dy;
+                            const newCol = col - i * dx;
+                            
+                            if (newRow < 0 || newRow >= BOARD_SIZE || newCol < 0 || newCol >= BOARD_SIZE) {
+                                break;
+                            }
+                            
+                            if (gameBoard[newRow][newCol] === player) {
+                                count++;
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        if (count >= 5) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                }
+                
+                // 检查平局
+                function checkDraw() {
+                    for (let i = 0; i < BOARD_SIZE; i++) {
+                        for (let j = 0; j < BOARD_SIZE; j++) {
+                            if (gameBoard[i][j] === 0) {
+                                return false; // 还有空位，不是平局
+                            }
+                        }
+                    }
+                    return true; // 棋盘已满，平局
+                }
+                
+                // 更新游戏状态显示
+                function updateGameStatus() {
+                    if (gameOver) {
+                        return;
+                    }
+                    
+                    statusText.textContent = `游戏进行中 - ${currentPlayer === 1 ? '黑棋' : '白棋'}回合`;
+                    currentPlayerEl.className = `w-6 h-6 rounded-full ${currentPlayer === 1 ? 'bg-black' : 'bg-white border border-gray-300'} mr-2 piece-shadow`;
+                    playerText.textContent = currentPlayer === 1 ? '黑棋' : '白棋';
+                    moveCountEl.textContent = moveCount;
+                }
+                
+                // 显示胜利模态框
+                function showWinModal(winner) {
+                    gameOver = true;
+                    winnerText.textContent = `${winner === 1 ? '黑棋' : '白棋'}获胜!`;
+                    
+                    winModal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modalContent.classList.remove('scale-95', 'opacity-0');
+                        modalContent.classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                }
+                
+                // 隐藏胜利模态框
+                function hideWinModal() {
+                    modalContent.classList.remove('scale-100', 'opacity-100');
+                    modalContent.classList.add('scale-95', 'opacity-0');
+                    
+                    setTimeout(() => {
+                        winModal.classList.add('hidden');
+                    }, 300);
+                }
+                
+                // 重置游戏
+                function resetGame() {
+                    gameBoard = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+                    currentPlayer = 1;
+                    gameOver = false;
+                    moveCount = 0;
+                    
+                    drawBoard();
+                    updateGameStatus();
+                    statusText.textContent = '游戏开始! 黑棋先行';
+                    
+                    hideWinModal();
+                }
+                
+                // 点击棋盘事件
+                canvas.addEventListener('click', (e) => {
+                    if (gameOver) return;
+                    
+                    const rect = canvas.getBoundingClientRect();
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+                    
+                    // 计算点击的格子坐标
+                    const x = (e.clientX - rect.left) * scaleX;
+                    const y = (e.clientY - rect.top) * scaleY;
+                    
+                    const col = Math.round(x / CELL_SIZE);
+                    const row = Math.round(y / CELL_SIZE);
+                    
+                    // 检查坐标是否在棋盘内且为空
+                    if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE && gameBoard[row][col] === 0) {
+                        // 落子
+                        gameBoard[row][col] = currentPlayer;
+                        moveCount++;
+                        
+                        // 添加落子动画效果
+                        drawBoard();
+                        
+                        // 检查是否胜利
+                        if (checkWin(row, col, currentPlayer)) {
+                            showWinModal(currentPlayer);
+                            return;
+                        }
+                        
+                        // 检查是否平局
+                        if (checkDraw()) {
+                            gameOver = true;
+                            statusText.textContent = '游戏结束 - 平局!';
+                            return;
+                        }
+                        
+                        // 切换玩家
+                        currentPlayer = currentPlayer === 1 ? 2 : 1;
+                        updateGameStatus();
+                    }
+                });
+                
+                // 事件监听
+                restartBtn.addEventListener('click', resetGame);
+                newGameBtn.addEventListener('click', resetGame);
+                
+                // 初始化游戏
+                drawBoard();
+                updateGameStatus();
+            });
+        </script>
+    </body>
+    </html>
